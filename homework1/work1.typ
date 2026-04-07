@@ -54,3 +54,19 @@ $ theta(lambda,eta,alpha,beta) =&
   1/2 (sum_(i,j)(lambda_i-eta_i)(lambda_j-eta_j)iv(phi(x_i))phi(x_j))\
   &+ C_1 ss(i,1,N) frac(lambda_i+eta_i+alpha_i+beta_i-2 C_1,2C_2)\
   &+ C_2 ss(i,1,N) frac((lambda_i+alpha_i-C_1)^2 + (eta_i+beta_i-c_1)^2,4C_2^2) $
+
+*c* $ min{1/2 ||omega||^2+C ss(i,1,N) delta_i^2 } $
+$ "subject to:" y_i-iv(omega) phi(x_i) = delta_i $
+*answer:* $ L(omega,delta_i,lambda_i)= 1/2 ||omega||^2+C ss(i,1,N) delta_i^2+ss(i,1,N) lambda_i (y_i-iv(omega) phi(x_i) - delta_i) $
+$ &pd(L,omega) = ||omega|| - ss(i,1,N) lambda_i phi(x_i) = 0\
+  &pd(L,delta_i) = 2C delta_i - lambda_i = 0 $
+带入得，
+$ theta(lambda) = 1/2 sum_(i,j) (lambda_i lambda_j iv(phi(x_i))phi(x_j))+1/(4C) ss(i,1,N) lambda_i^2 $
+*d*
+$ min{ss(i,1,N) x_i ln(x_i)} $
+$ "subject to:" &iv(omega)x <= b\
+  &ss(i,1,N) x_i = 1 $
+*answer:* $ L(x,lambda,eta) = ss(i,1,N) x_i ln(x_i) + lambda (iv(omega)x-b) + eta(ss(i,1,N)x_i -1) $
+$ pd(L,x_i) = ln(x_i)+1+lambda omega_i+eta = 0 $
+带入得，
+$ theta(lambda,eta) = -ss(i,1,N) e^(-(eta+lambda omega_i +1)) (eta+lambda omega_i +1) $
