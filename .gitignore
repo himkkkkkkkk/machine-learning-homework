@@ -2,3 +2,4 @@
 *.png
 *.jpg
 *.pyc
+./homework2/code/tmp/*
