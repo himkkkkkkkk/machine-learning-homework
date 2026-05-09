@@ -1,0 +1,7 @@
+{
+  "num_class": 10,
+  "dropout": 0.3,
+  "num_epoch": 100,
+  "batch_size": 256,
+  "lr": 0.001
+}

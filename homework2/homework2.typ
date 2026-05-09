@@ -122,7 +122,7 @@ _backward_:
 _a_
 $
   W_1 : D_(a_1) times D_(x) , b_1 : D_(a_1) times 1 \
-  W_2 : 1 times D_(a_1) times 1 , b_2 : 1 times 1
+  W_2 : 1 times D_(a_1), b_2 : 1 times 1
 $
 _b_
 $
@@ -145,12 +145,12 @@ _e_
 _f_
 $
   pd(L^i, W_1) & = pd(L^i, z_3)pd(z_3, a) ( pd(a, z_1) pd(z_1, W_1) + pd(a, z_2) pd(z_2, W_1) ) \
-               & = (y^i - sigma(z_3)) iv(W_2) ( bb(1)_(z_1>=0) iv(x^i) - bb(1)_(z_1>=0) iv(x^(prime i)))
+               & = (y^i - sigma(z_3)) iv(W_2) ( bb(1)_(z_1>=0) iv(x^i) - bb(1)_(z_2>=0) iv(x^(prime i)))
 $
 _g_
 $
   pd(J, W_1) = sum_(i=1)^m pd(J, L^i)pd(L^i, W_1) & = - 1/m sum_(i=1)^m pd(L^i, W_1) \
-  & = - 1/m sum_(i=1)^m (y^i - sigma(z_3)) iv(W_2) ( bb(1)_(z_1>=0) iv(x^i) - bb(1)_(z_1>=0) iv(x^(prime i)))
+  & = - 1/m sum_(i=1)^m (y^i - sigma(z_3)) iv(W_2) ( bb(1)_(z_1>=0) iv(x^i) - bb(1)_(z_2>=0) iv(x^(prime i)))
 $
 _h_
 $
@@ -159,3 +159,118 @@ $
   b_1 <- b_1 - alpha pd(J, b_1)\
   b_2 <- b_2 - alpha pd(J, b_2)
 $
+
+*10.*
+
+```bash
+machine-learning-homework/homework2/code HEAD*​​ 16s 
+ml ❯ uv run main.py train
+Test Accuracy: 90.73% (9073/10000)
+Model saved to tmp/fashion_mnist/model.pt
+
+machine-learning-homework/homework2/code HEAD*​​ 3m3s 
+ml ❯ uv run main.py infer 42
+pre0|exp3
+
+machine-learning-homework/homework2/code HEAD*​​ 4s 
+ml ❯ uv run main.py infer 43
+pre7|exp7
+```
+上面是运行结果摘要。
+
+下面将摘出任务的代码实现。
+
+_(1)_
+```py
+FASHION_MNIST_TRANSFORM = transforms.Compose(
+    [transforms.ToTensor()]
+)
+```
+_(2)_
+```py
+class Fashion_Mnist_Model(nn.Module):
+    def __init__(self,num_class: int = 10,dropout:float = 0.6):
+        super().__init__()
+        self.c1 = nn.Conv2d(1,8,3) # 28*28 -> 26*26 -> 16*16
+        self.c2 = nn.Conv2d(8,16,4) # 16*16 -> 13*13 -> 8*8
+        self.bn1 = nn.BatchNorm2d(8)
+        self.bn2 = nn.BatchNorm2d(16)
+        self.a = nn.SiLU()
+        self.pool2 = nn.AdaptiveAvgPool2d(8)
+        self.pool1 = nn.AdaptiveAvgPool2d(16)
+        self.fc = nn.Linear(8*8*16,num_class)
+
+    def forward(self,x:torch.Tensor)->torch.Tensor:
+        x = self.c1(x)
+        x = self.bn1(x)
+        x = self.a(x)
+        x = self.pool1(x)
+        x = self.c2(x)
+        x = self.bn2(x)
+        x = self.a(x)
+        x = self.pool2(x)
+        x = x.reshape(x.size(0),-1)
+        x = self.fc(x)
+        return x
+```
+_(3)_
+```py
+    optim = torch.optim.Adam(model.parameters(),lr=lr)
+    loss_f = nn.CrossEntropyLoss()
+```
+_(4)_
+```py
+for epoch in range(1,num_epoch):
+        model.train()
+        total_loss = 0
+        correct = 0
+        total = 0
+        for image,label in  train:
+            image,label = image.to(device),label.to(device)
+            optim.zero_grad()
+            output = model.forward(image)
+            loss = loss_f(output,label)
+            loss.backward()
+            optim.step()
+
+            total_loss += loss.item() * label.size(0)
+            correct += (output.argmax(1)==label).sum().item()
+            total += label.size(0)
+
+        avg_loss = total_loss / total
+        train_acc = correct / total * 100
+        print(f"Epoch [{epoch}/{num_epoch}]  loss: {avg_loss:.4f}  train acc: {train_acc:.2f}%")
+```
+没有实现可视化曲线，运行结果如下：
+```bash
+Epoch [1/100]  loss: 0.5658  train acc: 80.58%
+Epoch [2/100]  loss: 0.3649  train acc: 87.15%
+Epoch [3/100]  loss: 0.3277  train acc: 88.28%
+Epoch [4/100]  loss: 0.3027  train acc: 89.22%
+Epoch [5/100]  loss: 0.2869  train acc: 89.78%
+Epoch [6/100]  loss: 0.2751  train acc: 90.16%
+Epoch [7/100]  loss: 0.2659  train acc: 90.41%
+Epoch [8/100]  loss: 0.2599  train acc: 90.64%
+Epoch [9/100]  loss: 0.2538  train acc: 90.91%
+Epoch [10/100]  loss: 0.2470  train acc: 91.10%
+```
+对于训练过程的可视化。
+
+_(5)_
+```py
+def evaluate(model: Fashion_Mnist_Model, loader, device: torch.device) -> float:
+    model.eval()
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for images, labels in loader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            predicted = outputs.argmax(dim=1)
+            correct += (predicted == labels).sum().item()
+            total += labels.size(0)
+    acc = correct / total * 100
+    print(f"Test Accuracy: {acc:.2f}% ({correct}/{total})")
+    return acc
+```
+具体的代码在code文件夹。 

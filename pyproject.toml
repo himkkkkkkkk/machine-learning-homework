@@ -8,6 +8,8 @@ dependencies = [
     "libsvm-official>=3.37.0",
     "matplotlib",
     "numpy",
-    "pandas",
+    "polars>=1.40.1",
     "scikit-learn",
+    "torch>=2.11.0",
+    "torchvision>=0.26.0",
 ]
